@@ -90,7 +90,7 @@
                 </div>
             </div>
 
-            <!-- 搜尋與排序按鈕 -->
+            <!-- 搜尋與精準排序按鈕 -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div class="relative flex-grow">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs sm:text-sm"></i>
@@ -101,7 +101,6 @@
                     </button>
                 </div>
 
-                <!-- 已修復 publishDate 排序切換 -->
                 <button @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'"
                         class="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition shrink-0">
                     <i :class="sortOrder === 'desc' ? 'fa-solid fa-arrow-down-wide-short' : 'fa-solid fa-arrow-up-wide-short'" class="text-sky-600"></i>
@@ -232,7 +231,6 @@
                 </div>
 
                 <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
-                    <!-- 方案 B：精準生成獨立直連網址 -->
                     <button @click="copyPermalink(activeDetailModal)" class="bg-white hover:bg-slate-100 text-sky-700 border border-sky-200 font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5 shadow-xs">
                         <i class="fa-solid fa-link"></i>
                         <span>複製獨立公告網址</span>
@@ -378,7 +376,7 @@
 
                 const searchQuery = ref('');
                 const selectedCategory = ref('ALL');
-                const sortOrder = ref('desc'); // 'desc': 最新在前, 'asc': 舊在前
+                const sortOrder = ref('desc');
 
                 const isLoading = ref(false);
                 const isPublishing = ref(false);
@@ -410,11 +408,11 @@
                     { id: 'HOMEWORK', label: '作業提醒', icon: '📝' }
                 ];
 
-                // 跨瀏覽器安全日期解析器 (確保 publishDate 排序 100% 精準)
+                // 跨瀏覽器相容日期轉換器 (修復 Safari 與各式行動裝置排序)
                 const parseTimestamp = (dateVal) => {
                     if (!dateVal) return 0;
                     let str = String(dateVal).trim();
-                    str = str.replace(/-/g, '/'); // 相容 iOS Safari
+                    str = str.replace(/-/g, '/');
                     if (str.includes('T')) str = str.replace('T', ' ');
                     const t = new Date(str).getTime();
                     return isNaN(t) ? 0 : t;
@@ -440,9 +438,9 @@
                     }
                 };
 
-                // ✅ 精準修復 publishDate 時間排序邏輯
+                // ✅ 精準 publishDate 排序邏輯
                 const visibleAnnouncements = computed(() => {
-                    const nowWithBuffer = Date.now() + 5 * 60 * 1000; // 5分鐘發布緩衝
+                    const nowWithBuffer = Date.now() + 5 * 60 * 1000;
                     return announcements.value.filter(item => {
                         if (item.publishDate) {
                             const pTime = parseTimestamp(item.publishDate);
@@ -456,10 +454,8 @@
                         }
                         return true;
                     }).sort((a, b) => {
-                        // 1. 置頂優先
                         if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
                         
-                        // 2. 依照 publishDate 進行精準排序
                         const tA = parseTimestamp(a.publishDate);
                         const tB = parseTimestamp(b.publishDate);
                         
@@ -504,7 +500,6 @@
                 const openDetail = (item) => {
                     activeDetailModal.value = item;
                     currentCarouselIndex.value = 0;
-                    // 更新網址 Hash (方便重新整理或複製)
                     window.location.hash = item.id;
                 };
 
@@ -530,7 +525,7 @@
                 const nextLightbox = () => { lightboxIndex.value = (lightboxIndex.value + 1) % activeDetailModal.value.images.length; };
                 const prevLightbox = () => { lightboxIndex.value = (lightboxIndex.value - 1 + activeDetailModal.value.images.length) % activeDetailModal.value.images.length; };
 
-                // 方案 B：生成獨立直連網址（點擊帶有 ?post=ID 的連結，開頁面會自動開啟彈窗）
+                // 複製 GitHub Pages 獨立公告網址
                 const copyPermalink = (item) => {
                     const baseUrl = window.location.origin + window.location.pathname;
                     const fullPermalink = `${baseUrl}?post=${item.id}`;
@@ -635,7 +630,7 @@
                     setTimeout(() => { toastMessage.value = ''; }, 3500);
                 };
 
-                // 方案 B 直連檢查：開啟網頁時如果帶有 ?post=ID 或 #ID，自動打開該公告彈窗
+                // 直連自動跳彈窗檢查（讀取 ?post=ID 或 #ID）
                 const checkHashPermalink = () => {
                     const urlParams = new URLSearchParams(window.location.search);
                     const targetId = urlParams.get('post') || window.location.hash.replace('#', '');
