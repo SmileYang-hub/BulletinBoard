@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>班級最新公告與榮譽榜</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .toast-enter-active, .toast-leave-active {
+            transition: all 0.3s ease;
+        }
+        .toast-enter-from, .toast-leave-to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="p-2 sm:p-5 selection:bg-sky-200 selection:text-sky-900">
+
+    <div id="app" class="w-full max-w-4xl mx-auto space-y-3 sm:space-y-4" v-cloak>
+
+        <!-- 置頂緊急橫幅 -->
+        <div v-if="pinnedUrgentAnnouncement" class="bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 text-lg sm:text-xl">
+                    🔔
+                </div>
+                <div class="min-w-0">
+                    <span class="text-[10px] sm:text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">重要緊急通知</span>
+                    <h3 class="font-bold text-xs sm:text-base truncate">{{ pinnedUrgentAnnouncement.title }}</h3>
+                </div>
+            </div>
+            <button @click="openDetail(pinnedUrgentAnnouncement)" class="bg-white text-slate-800 font-bold text-xs sm:text-sm px-3 py-1.5 rounded-xl hover:bg-slate-100 shrink-0 transition shadow-xs">
+                查看詳情
+            </button>
+        </div>
+
+        <!-- 主控制板 -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h1 class="text-lg sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <span>📢 班級公告與榮譽榜</span>
+                    </h1>
+                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">即時連動雲端試算表資料庫，免登入即可瀏覽</p>
+                </div>
+
+                <div class="flex items-center gap-2 self-end sm:self-auto">
+                    <button @click="openEditor" class="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>發布公告</span>
+                    </button>
+
+                    <button @click="loadStoredData" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="重新載入">
+                        <i class="fa-solid fa-rotate-right" :class="{'fa-spin': isLoading}"></i>
+                        <span class="hidden sm:inline">{{ isLoading ? '讀取中' : '重新載入' }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜尋與排序按鈕 -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="relative flex-grow">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs sm:text-sm"></i>
+                    <input type="text" v-model="searchQuery" placeholder="搜尋公告關鍵字..."
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400 text-xs sm:text-sm transition">
+                    <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- 已修復 publishDate 排序切換 -->
+                <button @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'"
+                        class="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition shrink-0">
+                    <i :class="sortOrder === 'desc' ? 'fa-solid fa-arrow-down-wide-short' : 'fa-solid fa-arrow-up-wide-short'" class="text-sky-600"></i>
+                    <span>{{ sortOrder === 'desc' ? '最新在前' : '舊在前' }}</span>
+                </button>
+            </div>
+
+            <!-- 分類標籤 -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
+                <button v-for="cat in categories" :key="cat.id"
+                        @click="selectedCategory = cat.id"
+                        :class="selectedCategory === cat.id ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                        class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 shrink-0">
+                    <span>{{ cat.icon }}</span>
+                    <span>{{ cat.label }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 公告列表區 -->
+        <div class="space-y-2.5">
+            <div v-if="isLoading" class="bg-white rounded-2xl sm:rounded-3xl p-10 text-center space-y-2 border border-slate-200">
+                <i class="fa-solid fa-spinner fa-spin text-sky-500 text-3xl"></i>
+                <p class="text-slate-400 text-xs sm:text-sm font-medium">正在載入最新公告...</p>
+            </div>
+
+            <div v-else-if="visibleAnnouncements.length === 0" class="bg-white rounded-2xl sm:rounded-3xl p-10 text-center space-y-2 border border-slate-200">
+                <div class="text-slate-300 text-4xl">
+                    <i class="fa-regular fa-folder-open"></i>
+                </div>
+                <p class="text-slate-400 text-xs sm:text-sm font-medium">目前沒有符合條件的公告訊息</p>
+            </div>
+
+            <div v-else v-for="item in visibleAnnouncements" :key="item.id"
+                 @click="openDetail(item)"
+                 class="bg-white hover:bg-sky-50/50 active:bg-sky-100/50 rounded-2xl p-3.5 sm:p-4 border border-slate-200 transition duration-150 shadow-xs hover:shadow-md cursor-pointer group space-y-1.5">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="space-y-1 min-w-0 flex-grow">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span v-if="item.isPinned" class="bg-rose-100 text-rose-700 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md border border-rose-200">
+                                📌 置頂
+                            </span>
+                            
+                            <span :class="getCategoryBadgeClass(item.category)" class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md">
+                                {{ getCategoryLabel(item.category) }}
+                            </span>
+
+                            <span v-if="item.images && item.images.length > 0" class="bg-slate-100 text-slate-600 text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                <i class="fa-regular fa-image"></i>
+                                {{ item.images.length }} 張圖片
+                            </span>
+                        </div>
+
+                        <h2 class="font-bold text-slate-800 text-sm sm:text-lg group-hover:text-sky-600 transition truncate">
+                            {{ item.title }}
+                        </h2>
+                    </div>
+
+                    <div class="shrink-0 text-right text-[11px] sm:text-xs text-slate-400 font-medium pt-0.5">
+                        {{ formatDate(item.publishDate) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 公告詳情 Modal -->
+        <div v-if="activeDetailModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto" @click.self="closeDetail">
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+                
+                <div class="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-3 shrink-0">
+                    <div class="space-y-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span :class="getCategoryBadgeClass(activeDetailModal.category)" class="text-xs font-bold px-2.5 py-0.5 rounded-md">
+                                {{ getCategoryLabel(activeDetailModal.category) }}
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                <i class="fa-regular fa-calendar mr-1"></i> {{ formatDate(activeDetailModal.publishDate) }}
+                            </span>
+                        </div>
+                        <h2 class="text-base sm:text-xl font-bold text-slate-800 leading-snug">
+                            {{ activeDetailModal.title }}
+                        </h2>
+                    </div>
+                    
+                    <button @click="closeDetail" class="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-500 flex items-center justify-center shrink-0 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-grow">
+                    <div class="text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-line font-medium">
+                        {{ activeDetailModal.content }}
+                    </div>
+
+                    <div v-if="activeDetailModal.images && activeDetailModal.images.length > 0" class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <div class="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
+                            <span>📷 相簿 ({{ currentCarouselIndex + 1 }} / {{ activeDetailModal.images.length }})</span>
+                            <span class="text-sky-600 text-[11px]"><i class="fa-solid fa-magnifying-glass-plus mr-1"></i>點擊看大圖</span>
+                        </div>
+
+                        <div class="relative aspect-video rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center">
+                            <img :src="activeDetailModal.images[currentCarouselIndex]" 
+                                 class="max-h-full max-w-full object-contain cursor-zoom-in"
+                                 @click="openLightbox(currentCarouselIndex)"
+                                 alt="公告圖片">
+
+                            <button v-if="activeDetailModal.images.length > 1" 
+                                    @click="prevImage"
+                                    class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button v-if="activeDetailModal.images.length > 1" 
+                                    @click="nextImage"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div v-if="activeDetailModal.images.length > 1" class="flex items-center gap-2 overflow-x-auto pt-1">
+                            <button v-for="(img, idx) in activeDetailModal.images" :key="idx"
+                                    @click="currentCarouselIndex = idx"
+                                    :class="currentCarouselIndex === idx ? 'ring-2 ring-sky-500 scale-105' : 'opacity-60 hover:opacity-100'"
+                                    class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-200 transition bg-slate-200">
+                                <img :src="img" class="w-full h-full object-cover">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
+                    <!-- 方案 B：精準生成獨立直連網址 -->
+                    <button @click="copyPermalink(activeDetailModal)" class="bg-white hover:bg-slate-100 text-sky-700 border border-sky-200 font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-link"></i>
+                        <span>複製獨立公告網址</span>
+                    </button>
+
+                    <button @click="closeDetail" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition">
+                        關閉
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 發布新公告 Modal -->
+        <div v-if="showEditorModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-sky-700 text-white flex items-center justify-between shrink-0">
+                    <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>發布班級新公告</span>
+                    </h3>
+                    <button @click="showEditorModal = false" class="text-slate-200 hover:text-white">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form @submit.prevent="savePost" class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-grow text-xs sm:text-sm">
+                    <div class="p-3 rounded-2xl border transition space-y-1"
+                         :class="passwordError ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-200/80'">
+                        <label class="block font-bold" :class="passwordError ? 'text-rose-900' : 'text-amber-900'">🔒 管理員發布密碼 *</label>
+                        <input type="password" v-model="editorForm.password" required placeholder="請輸入管理員密碼"
+                               @input="passwordError = ''"
+                               :class="passwordError ? 'border-rose-400 focus:ring-rose-500' : 'border-amber-300 focus:ring-amber-500'"
+                               class="w-full px-3 py-2 rounded-xl border bg-white focus:outline-none focus:ring-2">
+                        <p v-if="passwordError" class="text-rose-600 font-bold text-xs pt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>{{ passwordError }}</span>
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">公告分類 *</label>
+                            <select v-model="editorForm.category" @change="updateTitleEmoji" required class="w-full px-2.5 py-2 rounded-xl border border-slate-300 bg-white font-medium">
+                                <option value="GENERAL">📢 一般公告</option>
+                                <option value="HONOR">🏆 榮譽榜</option>
+                                <option value="EVENT">📅 重要行事</option>
+                                <option value="HOMEWORK">📝 作業提醒</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">預約發布時間 *</label>
+                            <input type="datetime-local" v-model="editorForm.publishDate" required
+                                   class="w-full px-2 py-2 rounded-xl border border-slate-300 bg-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">公告標題 *</label>
+                        <input type="text" v-model="editorForm.title" required placeholder="請輸入公告標題..."
+                               class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+                    </div>
+
+                    <label class="flex items-center gap-2 font-bold text-slate-700 cursor-pointer pt-0.5">
+                        <input type="checkbox" v-model="editorForm.isPinned" class="w-4 h-4 rounded text-sky-600">
+                        <span>📌 置頂公告 (顯示於列表最上方與緊急橫幅)</span>
+                    </label>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">公告詳細內文 *</label>
+                        <textarea v-model="editorForm.content" rows="4" required placeholder="請輸入公告詳細內容..."
+                                  class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="space-y-2 bg-sky-50/60 p-3 rounded-2xl border border-sky-100">
+                        <div class="flex items-center justify-between">
+                            <label class="block font-bold text-sky-900">📷 選擇多張相片上傳</label>
+                            <span class="text-[10px] text-slate-400">已選 {{ editorForm.images.length }} 張照片</span>
+                        </div>
+                        <input type="file" multiple accept="image/*" @change="handleMultipleImageUpload" 
+                               class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-600 file:text-white cursor-pointer">
+
+                        <div v-if="editorForm.images.length > 0" class="grid grid-cols-4 gap-2 pt-1">
+                            <div v-for="(img, idx) in editorForm.images" :key="idx" class="relative aspect-square rounded-lg overflow-hidden border border-slate-200">
+                                <img :src="img.preview || img" class="w-full h-full object-cover">
+                                <button type="button" @click="editorForm.images.splice(idx, 1)" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" @click="showEditorModal = false" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold">取消</button>
+                        <button type="submit" :disabled="isPublishing" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center gap-1.5 shadow-xs">
+                            <i v-if="isPublishing" class="fa-solid fa-spinner fa-spin"></i>
+                            <span>{{ isPublishing ? '驗證密碼與發布中...' : '確認發布' }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 全螢幕燈箱 -->
+        <div v-if="lightboxOpen" class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-between p-3 select-none" @click.self="closeLightbox">
+            <div class="w-full max-w-5xl flex items-center justify-between text-white py-1">
+                <div class="text-xs opacity-80">({{ lightboxIndex + 1 }} / {{ activeDetailModal.images.length }})</div>
+                <button @click="closeLightbox" class="text-white text-lg p-2 hover:text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="relative flex-grow w-full max-w-5xl flex items-center justify-center my-2">
+                <img :src="activeDetailModal.images[lightboxIndex]" class="max-h-[82vh] max-w-full object-contain rounded-lg">
+                <button v-if="activeDetailModal.images.length > 1" @click="prevLightbox" class="absolute left-2 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button v-if="activeDetailModal.images.length > 1" @click="nextLightbox" class="absolute right-2 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 動態 Toast 提示 -->
+        <transition name="toast">
+            <div v-if="toastMessage" 
+                 :class="toastType === 'error' ? 'bg-rose-900 text-white border-rose-700' : 'bg-slate-800 text-white border-slate-700'"
+                 class="fixed top-5 left-1/2 -translate-x-1/2 z-50 text-xs sm:text-sm font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border">
+                <i :class="toastType === 'error' ? 'fa-solid fa-circle-xmark text-rose-400' : 'fa-solid fa-circle-check text-emerald-400'"></i>
+                <span>{{ toastMessage }}</span>
+            </div>
+        </transition>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz4IUhDxFt3Z9LfOQ830ndwRHMQdGckrCk4NSFLwSCrVGkMSWVTuKnHldvJcGa8ASs/exec';
+
+                const searchQuery = ref('');
+                const selectedCategory = ref('ALL');
+                const sortOrder = ref('desc'); // 'desc': 最新在前, 'asc': 舊在前
+
+                const isLoading = ref(false);
+                const isPublishing = ref(false);
+                const announcements = ref([]);
+
+                const activeDetailModal = ref(null);
+                const currentCarouselIndex = ref(0);
+                const lightboxOpen = ref(false);
+                const lightboxIndex = ref(0);
+
+                const showEditorModal = ref(false);
+                const passwordError = ref('');
+                const editorForm = ref({ title: '', category: 'GENERAL', publishDate: '', isPinned: false, content: '', images: [], password: '' });
+                const toastMessage = ref('');
+                const toastType = ref('success');
+
+                const categoryEmojiMap = {
+                    'GENERAL': '📢',
+                    'HONOR': '🏆',
+                    'EVENT': '📅',
+                    'HOMEWORK': '📝'
+                };
+
+                const categories = [
+                    { id: 'ALL', label: '全部', icon: '📂' },
+                    { id: 'GENERAL', label: '一般公告', icon: '📢' },
+                    { id: 'HONOR', label: '榮譽榜', icon: '🏆' },
+                    { id: 'EVENT', label: '重要行事', icon: '📅' },
+                    { id: 'HOMEWORK', label: '作業提醒', icon: '📝' }
+                ];
+
+                // 跨瀏覽器安全日期解析器 (確保 publishDate 排序 100% 精準)
+                const parseTimestamp = (dateVal) => {
+                    if (!dateVal) return 0;
+                    let str = String(dateVal).trim();
+                    str = str.replace(/-/g, '/'); // 相容 iOS Safari
+                    if (str.includes('T')) str = str.replace('T', ' ');
+                    const t = new Date(str).getTime();
+                    return isNaN(t) ? 0 : t;
+                };
+
+                const loadStoredData = async () => {
+                    isLoading.value = true;
+                    try {
+                        const response = await fetch(GAS_API_URL);
+                        const data = await response.json();
+                        if (Array.isArray(data)) {
+                            announcements.value = data.map(item => ({
+                                ...item,
+                                images: Array.isArray(item.images) ? item.images : (item.images ? String(item.images).split(',').map(s=>s.trim()) : []),
+                                isPinned: item.isPinned === true || String(item.isPinned).toLowerCase() === 'true'
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('資料讀取失敗:', error);
+                        showToast('⚠️ 資料讀取失敗，請重新整理', 'error');
+                    } finally {
+                        isLoading.value = false;
+                    }
+                };
+
+                // ✅ 精準修復 publishDate 時間排序邏輯
+                const visibleAnnouncements = computed(() => {
+                    const nowWithBuffer = Date.now() + 5 * 60 * 1000; // 5分鐘發布緩衝
+                    return announcements.value.filter(item => {
+                        if (item.publishDate) {
+                            const pTime = parseTimestamp(item.publishDate);
+                            if (pTime > 0 && pTime > nowWithBuffer) return false;
+                        }
+                        if (selectedCategory.value !== 'ALL' && item.category !== selectedCategory.value) return false;
+                        if (searchQuery.value.trim() !== '') {
+                            const q = searchQuery.value.toLowerCase();
+                            return (item.title && item.title.toLowerCase().includes(q)) || 
+                                   (item.content && item.content.toLowerCase().includes(q));
+                        }
+                        return true;
+                    }).sort((a, b) => {
+                        // 1. 置頂優先
+                        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+                        
+                        // 2. 依照 publishDate 進行精準排序
+                        const tA = parseTimestamp(a.publishDate);
+                        const tB = parseTimestamp(b.publishDate);
+                        
+                        if (tA === tB) return 0;
+                        return sortOrder.value === 'desc' ? (tB - tA) : (tA - tB);
+                    });
+                });
+
+                const pinnedUrgentAnnouncement = computed(() => visibleAnnouncements.value.find(a => a.isPinned));
+
+                const getCategoryLabel = (id) => categories.find(c => c.id === id)?.label || id;
+                const getCategoryBadgeClass = (id) => {
+                    switch (id) {
+                        case 'HONOR': return 'bg-amber-100 text-amber-800 border border-amber-200';
+                        case 'EVENT': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                        case 'HOMEWORK': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
+                        default: return 'bg-sky-100 text-sky-800 border border-sky-200';
+                    }
+                };
+
+                const formatDate = (iso) => {
+                    if (!iso) return '';
+                    const d = new Date(parseTimestamp(iso));
+                    if (isNaN(d.getTime())) return iso;
+                    return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+                };
+
+                const updateTitleEmoji = () => {
+                    const emoji = categoryEmojiMap[editorForm.value.category] || '';
+                    if (!emoji) return;
+
+                    let currentTitle = editorForm.value.title || '';
+                    Object.values(categoryEmojiMap).forEach(e => {
+                        if (currentTitle.startsWith(e)) {
+                            currentTitle = currentTitle.substring(e.length).trim();
+                        }
+                    });
+
+                    editorForm.value.title = `${emoji} ${currentTitle}`.trim();
+                };
+
+                const openDetail = (item) => {
+                    activeDetailModal.value = item;
+                    currentCarouselIndex.value = 0;
+                    // 更新網址 Hash (方便重新整理或複製)
+                    window.location.hash = item.id;
+                };
+
+                const closeDetail = () => {
+                    activeDetailModal.value = null;
+                    if (window.location.hash) {
+                        history.pushState("", document.title, window.location.pathname + window.location.search);
+                    }
+                };
+
+                const nextImage = () => {
+                    if (!activeDetailModal.value?.images?.length) return;
+                    currentCarouselIndex.value = (currentCarouselIndex.value + 1) % activeDetailModal.value.images.length;
+                };
+
+                const prevImage = () => {
+                    if (!activeDetailModal.value?.images?.length) return;
+                    currentCarouselIndex.value = (currentCarouselIndex.value - 1 + activeDetailModal.value.images.length) % activeDetailModal.value.images.length;
+                };
+
+                const openLightbox = (idx) => { lightboxIndex.value = idx; lightboxOpen.value = true; };
+                const closeLightbox = () => { lightboxOpen.value = false; };
+                const nextLightbox = () => { lightboxIndex.value = (lightboxIndex.value + 1) % activeDetailModal.value.images.length; };
+                const prevLightbox = () => { lightboxIndex.value = (lightboxIndex.value - 1 + activeDetailModal.value.images.length) % activeDetailModal.value.images.length; };
+
+                // 方案 B：生成獨立直連網址（點擊帶有 ?post=ID 的連結，開頁面會自動開啟彈窗）
+                const copyPermalink = (item) => {
+                    const baseUrl = window.location.origin + window.location.pathname;
+                    const fullPermalink = `${baseUrl}?post=${item.id}`;
+
+                    const textarea = document.createElement('textarea');
+                    textarea.value = fullPermalink;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast(`🔗 獨立公告網址已成功複製！`, 'success');
+                };
+
+                const handleMultipleImageUpload = (event) => {
+                    const files = event.target.files;
+                    if (!files.length) return;
+
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.src = e.target.result;
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                const maxWidth = 1000;
+                                let scale = 1;
+                                if (img.width > maxWidth) scale = maxWidth / img.width;
+                                canvas.width = img.width * scale;
+                                canvas.height = img.height * scale;
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                
+                                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                                editorForm.value.images.push({
+                                    name: file.name,
+                                    type: 'image/jpeg',
+                                    data: compressedBase64,
+                                    preview: compressedBase64
+                                });
+                            };
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                };
+
+                const openEditor = () => {
+                    const nowISO = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                    editorForm.value = { title: '', category: 'GENERAL', publishDate: nowISO, isPinned: false, content: '', images: [], password: '' };
+                    passwordError.value = '';
+                    updateTitleEmoji();
+                    showEditorModal.value = true;
+                };
+
+                const savePost = async () => {
+                    if (isPublishing.value) return;
+                    isPublishing.value = true;
+                    passwordError.value = '';
+
+                    try {
+                        const postData = {
+                            id: `post-${Date.now()}`,
+                            password: String(editorForm.value.password || '').trim(),
+                            title: editorForm.value.title,
+                            category: editorForm.value.category,
+                            publishDate: editorForm.value.publishDate,
+                            isPinned: editorForm.value.isPinned,
+                            content: editorForm.value.content,
+                            images: editorForm.value.images
+                        };
+
+                        const response = await fetch(GAS_API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: JSON.stringify(postData)
+                        });
+
+                        const resData = await response.json();
+
+                        if (resData.status !== 'success') {
+                            const errMsg = resData.message || '❌ 管理員密碼不正確！';
+                            passwordError.value = errMsg;
+                            showToast(errMsg, 'error');
+                            isPublishing.value = false;
+                            return;
+                        }
+
+                        showToast('✅ 新公告發布成功！', 'success');
+                        showEditorModal.value = false;
+                        setTimeout(() => { loadStoredData(); }, 1200);
+
+                    } catch (err) {
+                        console.error('發布失敗:', err);
+                        showToast('⚠ 發布失敗，請檢查網路連線', 'error');
+                    } finally {
+                        isPublishing.value = false;
+                    }
+                };
+
+                const showToast = (msg, type = 'success') => {
+                    toastMessage.value = msg;
+                    toastType.value = type;
+                    setTimeout(() => { toastMessage.value = ''; }, 3500);
+                };
+
+                // 方案 B 直連檢查：開啟網頁時如果帶有 ?post=ID 或 #ID，自動打開該公告彈窗
+                const checkHashPermalink = () => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const targetId = urlParams.get('post') || window.location.hash.replace('#', '');
+                    if (targetId) {
+                        const match = announcements.value.find(a => String(a.id).trim() === String(targetId).trim());
+                        if (match) openDetail(match);
+                    }
+                };
+
+                onMounted(async () => {
+                    await loadStoredData();
+                    checkHashPermalink();
+                });
+
+                return {
+                    searchQuery, selectedCategory, sortOrder, categories,
+                    isLoading, isPublishing, visibleAnnouncements, pinnedUrgentAnnouncement,
+                    activeDetailModal, currentCarouselIndex, lightboxOpen, lightboxIndex,
+                    showEditorModal, editorForm, passwordError, toastMessage, toastType,
+                    getCategoryLabel, getCategoryBadgeClass, formatDate, updateTitleEmoji,
+                    loadStoredData, openDetail, closeDetail, nextImage, prevImage,
+                    openLightbox, closeLightbox, nextLightbox, prevLightbox,
+                    copyPermalink, handleMultipleImageUpload, openEditor, savePost
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
