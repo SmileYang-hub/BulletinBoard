@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>115學年度401公告欄</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+            color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0f2fe;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #38bdf8;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0284c7;
+        }
+        .toast-enter-active, .toast-leave-active {
+            transition: all 0.3s ease;
+        }
+        .toast-enter-from, .toast-leave-to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="p-2 sm:p-5 selection:bg-sky-200 selection:text-sky-900">
+
+    <div id="app" class="w-full max-w-4xl mx-auto space-y-3 sm:space-y-4" v-cloak>
+
+        <!-- 📌 頂部固定招牌 (Sticky Header) -->
+        <div class="sticky top-0 z-40 -mx-2 px-2 pt-1 pb-2 bg-slate-50/90 backdrop-blur-md transition-all">
+            <div class="relative overflow-hidden bg-gradient-to-r from-sky-400 via-indigo-400 to-sky-500 text-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-lg border-b-4 border-sky-300">
+                <i class="fa-solid fa-cloud absolute -left-3 -bottom-3 text-white/20 text-5xl sm:text-7xl"></i>
+                <i class="fa-solid fa-cloud absolute right-12 -top-4 text-white/15 text-4xl sm:text-6xl"></i>
+                <i class="fa-solid fa-sparkles absolute right-1/3 top-2 text-amber-200/60 text-xs animate-pulse"></i>
+
+                <div class="relative z-10 flex items-center justify-between gap-2 sm:gap-4">
+                    <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div class="relative shrink-0 flex items-center justify-center">
+                            <div class="w-12 h-12 sm:w-15 sm:h-15 rounded-2xl bg-white/95 text-sky-600 shadow-md flex items-center justify-center text-2xl sm:text-3xl border-2 border-sky-200">
+                                <i class="fa-solid fa-book-open-reader text-sky-500"></i>
+                            </div>
+                            <span class="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] text-amber-950 font-bold shadow-xs">
+                                ✨
+                            </span>
+                        </div>
+
+                        <div class="min-w-0">
+                            <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-sky-100 border border-white/20 mb-0.5">
+                                <i class="fa-solid fa-school text-amber-200"></i>
+                                <span>401 班級園地</span>
+                                <span>•</span>
+                                <span>即時公告板 🚪</span>
+                            </div>
+                            <h1 class="text-base sm:text-2xl font-black tracking-wide text-white drop-shadow-xs truncate">
+                                115學年度401公告欄
+                            </h1>
+                        </div>
+                    </div>
+
+                    <!-- 快速跳轉快捷鈕 -->
+                    <div class="shrink-0 flex items-center gap-1.5">
+                        <a href="#calendar-section" class="bg-white/20 hover:bg-white/30 text-white font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm border border-white/30 transition flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-regular fa-calendar-days text-amber-200"></i>
+                            <span>行事曆</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 置頂緊急橫幅 -->
+        <div v-if="pinnedUrgentAnnouncement" class="bg-gradient-to-r from-amber-400 via-rose-500 to-rose-600 text-white rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-3 border-2 border-rose-300">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 text-lg sm:text-xl">
+                    🚨
+                </div>
+                <div class="min-w-0">
+                    <span class="text-[10px] sm:text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">重要緊急通知</span>
+                    <h3 class="font-bold text-xs sm:text-base truncate">{{ pinnedUrgentAnnouncement.title }}</h3>
+                </div>
+            </div>
+            <button @click="openDetail(pinnedUrgentAnnouncement)" class="bg-white text-rose-700 font-bold text-xs sm:text-sm px-3 py-1.5 rounded-xl hover:bg-slate-100 shrink-0 transition shadow-xs">
+                查看詳情
+            </button>
+        </div>
+
+        <!-- 主控制板 -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-sky-100 shadow-xs space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span>📢 公告與榮譽榜列表</span>
+                    </h2>
+                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">免登入即可瀏覽，點擊公告可檢視照片與下載附件</p>
+                </div>
+
+                <div class="flex items-center gap-2 self-end sm:self-auto">
+                    <button @click="openEditor" class="bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>發布公告</span>
+                    </button>
+
+                    <button @click="loadStoredData" class="bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs sm:text-sm px-3 py-2 rounded-xl border border-sky-200 transition flex items-center gap-1.5" title="重新載入">
+                        <i class="fa-solid fa-rotate-right" :class="{'fa-spin': isLoading}"></i>
+                        <span class="hidden sm:inline">{{ isLoading ? '讀取中' : '重新載入' }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜尋與精準排序按鈕 -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="relative flex-grow">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs sm:text-sm"></i>
+                    <input type="text" v-model="searchQuery" placeholder="搜尋公告關鍵字..."
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400 text-xs sm:text-sm transition">
+                    <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <button @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'"
+                        class="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition shrink-0">
+                    <i :class="sortOrder === 'desc' ? 'fa-solid fa-arrow-down-wide-short' : 'fa-solid fa-arrow-up-wide-short'" class="text-sky-600"></i>
+                    <span>{{ sortOrder === 'desc' ? '最新在前' : '舊在前' }}</span>
+                </button>
+            </div>
+
+            <!-- 分類標籤 -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
+                <button v-for="cat in categories" :key="cat.id"
+                        @click="selectedCategory = cat.id"
+                        :class="selectedCategory === cat.id ? 'bg-sky-500 text-white shadow-xs' : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-100'"
+                        class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 shrink-0">
+                    <span>{{ cat.icon }}</span>
+                    <span>{{ cat.label }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 公告列表區 -->
+        <div class="space-y-2.5">
+            <div v-if="isLoading" class="bg-white rounded-2xl sm:rounded-3xl p-10 text-center space-y-2 border border-sky-100">
+                <i class="fa-solid fa-spinner fa-spin text-sky-500 text-3xl"></i>
+                <p class="text-slate-400 text-xs sm:text-sm font-medium">正在載入最新公告...</p>
+            </div>
+
+            <div v-else-if="visibleAnnouncements.length === 0" class="bg-white rounded-2xl sm:rounded-3xl p-10 text-center space-y-2 border border-sky-100">
+                <div class="text-sky-200 text-4xl">
+                    <i class="fa-regular fa-folder-open"></i>
+                </div>
+                <p class="text-slate-400 text-xs sm:text-sm font-medium">目前沒有符合條件的公告訊息</p>
+            </div>
+
+            <div v-else v-for="item in visibleAnnouncements" :key="item.id"
+                 @click="openDetail(item)"
+                 class="bg-white hover:bg-sky-50/70 active:bg-sky-100/70 rounded-2xl p-3.5 sm:p-4 border border-sky-100 transition duration-150 shadow-xs hover:shadow-md cursor-pointer group space-y-1.5">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="space-y-1 min-w-0 flex-grow">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span v-if="item.isPinned" class="bg-rose-100 text-rose-700 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md border border-rose-200">
+                                📌 置頂
+                            </span>
+                            
+                            <span :class="getCategoryBadgeClass(item.category)" class="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md">
+                                {{ getCategoryLabel(item.category) }}
+                            </span>
+
+                            <span v-if="item.images && item.images.length > 0" class="bg-slate-100 text-slate-600 text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                <i class="fa-regular fa-image"></i>
+                                {{ item.images.length }} 張圖片
+                            </span>
+
+                            <span v-if="item.attachments && item.attachments.length > 0" class="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                <i class="fa-solid fa-paperclip"></i>
+                                {{ item.attachments.length }} 個附件
+                            </span>
+                        </div>
+
+                        <h2 class="font-bold text-slate-800 text-sm sm:text-lg group-hover:text-sky-600 transition truncate">
+                            {{ item.title }}
+                        </h2>
+                    </div>
+
+                    <div class="shrink-0 text-right text-[11px] sm:text-xs text-slate-400 font-medium pt-0.5">
+                        {{ formatDate(item.publishDate) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📅 整合最底部的班級行事曆區塊 -->
+        <div id="calendar-section" class="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-sky-100 shadow-xs space-y-3 pt-4">
+            <div class="flex items-center justify-between border-b border-sky-100 pb-2.5">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-check text-sky-500"></i>
+                    <span>班級整合行事曆</span>
+                </h2>
+                <span class="text-[11px] sm:text-xs text-slate-400 font-medium">即時同步 Google 日曆</span>
+            </div>
+
+            <!-- 行事曆等比例自適應容器 (已裁切 Add to Google Calendar) -->
+            <div class="relative w-full pb-[75%] sm:pb-[65%] h-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                <iframe src="https://calendar.google.com/calendar/embed?src=c_fddca7ba3b6a563eda105c5f8e3b6ce587e96787f8af7bb8ce1ae16bf00070c2%40group.calendar.google.com&amp;src=c_376db376c2adccf3391498b37902d8a5c5f1c625aa56acd721764ea03e7ccd0b%40group.calendar.google.com&amp;ctz=Asia%2FTaipei&amp;showTitle=0&amp;showPrint=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0" 
+                        class="absolute top-0 left-0 w-full h-[calc(100%+40px)] border-0" 
+                        frameborder="0" 
+                        scrolling="no"></iframe>
+            </div>
+
+            <!-- 黃色注意事項欄（小字體、溫和黃色） -->
+            <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 sm:p-3 text-amber-900 text-xs sm:text-sm flex items-start gap-2 font-medium">
+                <span class="text-sm shrink-0">📢</span>
+                <span>提醒：行事曆僅供參考，若有異動請以學校及班級最新公告為主。</span>
+            </div>
+        </div>
+
+        <!-- 公告詳情 Modal -->
+        <div v-if="activeDetailModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto" @click.self="closeDetail">
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-sky-100 overflow-hidden">
+                <div class="p-4 sm:p-5 bg-sky-50/50 border-b border-sky-100 flex items-start justify-between gap-3 shrink-0">
+                    <div class="space-y-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span :class="getCategoryBadgeClass(activeDetailModal.category)" class="text-xs font-bold px-2.5 py-0.5 rounded-md">
+                                {{ getCategoryLabel(activeDetailModal.category) }}
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                <i class="fa-regular fa-calendar mr-1"></i> {{ formatDate(activeDetailModal.publishDate) }}
+                            </span>
+                        </div>
+                        <h2 class="text-base sm:text-xl font-bold text-slate-800 leading-snug">
+                            {{ activeDetailModal.title }}
+                        </h2>
+                    </div>
+                    
+                    <button @click="closeDetail" class="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-500 flex items-center justify-center shrink-0 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-grow">
+                    <div class="text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-line font-medium break-words"
+                         v-html="formatContentWithLinks(activeDetailModal.content)">
+                    </div>
+
+                    <div v-if="activeDetailModal.images && activeDetailModal.images.length > 0" class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <div class="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
+                            <span>📷 相簿 ({{ currentCarouselIndex + 1 }} / {{ activeDetailModal.images.length }}) — 支援手機左右滑動</span>
+                            <span class="text-sky-600 text-[11px]"><i class="fa-solid fa-magnifying-glass-plus mr-1"></i>點擊看大圖</span>
+                        </div>
+
+                        <div class="relative aspect-video rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center touch-pan-y"
+                             @touchstart="handleTouchStart"
+                             @touchend="e => handleTouchEnd(e, nextImage, prevImage)">
+                            <img :src="activeDetailModal.images[currentCarouselIndex]" 
+                                 class="max-h-full max-w-full object-contain cursor-zoom-in select-none"
+                                 @click="openLightbox(currentCarouselIndex)"
+                                 alt="公告圖片">
+
+                            <button v-if="activeDetailModal.images.length > 1" 
+                                    @click="prevImage"
+                                    class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button v-if="activeDetailModal.images.length > 1" 
+                                    @click="nextImage"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div v-if="activeDetailModal.images.length > 1" class="flex items-center gap-2 overflow-x-auto pt-1">
+                            <button v-for="(img, idx) in activeDetailModal.images" :key="idx"
+                                    @click="currentCarouselIndex = idx"
+                                    :class="currentCarouselIndex === idx ? 'ring-2 ring-sky-500 scale-105' : 'opacity-60 hover:opacity-100'"
+                                    class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-200 transition bg-slate-200">
+                                <img :src="img" class="w-full h-full object-cover">
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="activeDetailModal.attachments && activeDetailModal.attachments.length > 0" class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                        <div class="text-xs text-slate-500 font-bold px-1 flex items-center gap-1">
+                            <i class="fa-solid fa-paperclip text-sky-600"></i>
+                            <span>相關文件與附件下載 ({{ activeDetailModal.attachments.length }})</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div v-for="(file, fIdx) in activeDetailModal.attachments" :key="fIdx"
+                                 class="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-xs hover:border-sky-300 transition">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <i :class="getFileIcon(file.name)" class="text-xl shrink-0"></i>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-slate-700 truncate">{{ file.name }}</p>
+                                        <p class="text-[10px] text-slate-400">點擊在 Google Drive 開啟</p>
+                                    </div>
+                                </div>
+                                <a :href="file.url || file.data" target="_blank" rel="noopener noreferrer"
+                                   class="bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-sky-200 shrink-0 flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>開啟/下載</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
+                    <button @click="copyPermalink(activeDetailModal)" class="bg-white hover:bg-slate-100 text-sky-700 border border-sky-200 font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-link"></i>
+                        <span>複製獨立公告網址</span>
+                    </button>
+
+                    <button @click="closeDetail" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 發布新公告 Modal -->
+        <div v-if="showEditorModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-sky-600 text-white flex items-center justify-between shrink-0">
+                    <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>發布班級新公告</span>
+                    </h3>
+                    <button @click="showEditorModal = false" class="text-slate-200 hover:text-white">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form @submit.prevent="savePost" class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-grow text-xs sm:text-sm">
+                    <div class="p-3 rounded-2xl border transition space-y-1"
+                         :class="passwordError ? 'bg-rose-50 border-rose-300' : 'bg-amber-50 border-amber-200/80'">
+                        <label class="block font-bold" :class="passwordError ? 'text-rose-900' : 'text-amber-900'">🔒 管理員發布密碼 *</label>
+                        <input type="password" v-model="editorForm.password" required placeholder="請輸入管理員密碼"
+                               @input="passwordError = ''"
+                               :class="passwordError ? 'border-rose-400 focus:ring-rose-500' : 'border-amber-300 focus:ring-amber-500'"
+                               class="w-full px-3 py-2 rounded-xl border bg-white focus:outline-none focus:ring-2">
+                        <p v-if="passwordError" class="text-rose-600 font-bold text-xs pt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>{{ passwordError }}</span>
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">公告分類 *</label>
+                            <select v-model="editorForm.category" @change="updateTitleEmoji" required class="w-full px-2.5 py-2 rounded-xl border border-slate-300 bg-white font-medium">
+                                <option value="GENERAL">📢 一般公告</option>
+                                <option value="HONOR">🏆 榮譽榜</option>
+                                <option value="EVENT">📅 重要行事</option>
+                                <option value="HOMEWORK">📝 作業提醒</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">預約發布時間 *</label>
+                            <input type="datetime-local" v-model="editorForm.publishDate" required
+                                   class="w-full px-2 py-2 rounded-xl border border-slate-300 bg-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">公告標題 *</label>
+                        <input type="text" v-model="editorForm.title" required placeholder="請輸入公告標題..."
+                               class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+                    </div>
+
+                    <label class="flex items-center gap-2 font-bold text-slate-700 cursor-pointer pt-0.5">
+                        <input type="checkbox" v-model="editorForm.isPinned" class="w-4 h-4 rounded text-sky-600">
+                        <span>📌 置頂公告 (顯示於列表最上方與緊急橫幅)</span>
+                    </label>
+
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">公告詳細內文 *</label>
+                        <textarea v-model="editorForm.content" rows="4" required placeholder="請輸入公告詳細內容 (貼網址如 https://... 會自動轉為藍色超連結)..."
+                                  class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="space-y-2 bg-sky-50/60 p-3 rounded-2xl border border-sky-100">
+                        <div class="flex items-center justify-between">
+                            <label class="block font-bold text-sky-900">📷 上傳照片 (圖片格式)</label>
+                            <span class="text-[10px] text-slate-400">已選 {{ editorForm.images.length }} 張照片</span>
+                        </div>
+                        <input type="file" multiple accept="image/*" @change="handleMultipleImageUpload" 
+                               class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-600 file:text-white cursor-pointer">
+
+                        <div v-if="editorForm.images.length > 0" class="grid grid-cols-4 gap-2 pt-1">
+                            <div v-for="(img, idx) in editorForm.images" :key="idx" class="relative aspect-square rounded-lg overflow-hidden border border-slate-200">
+                                <img :src="img.preview || img" class="w-full h-full object-cover">
+                                <button type="button" @click="editorForm.images.splice(idx, 1)" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 bg-amber-50/60 p-3 rounded-2xl border border-amber-200/60">
+                        <div class="flex items-center justify-between">
+                            <label class="block font-bold text-amber-900">📎 上傳 PDF / Office 文件檔案</label>
+                            <span class="text-[10px] text-slate-400">已選 {{ editorForm.attachments.length }} 個檔案</span>
+                        </div>
+                        <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" @change="handleFileUpload" 
+                               class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-600 file:text-white cursor-pointer">
+
+                        <div v-if="editorForm.attachments.length > 0" class="space-y-1.5 pt-1">
+                            <div v-for="(file, idx) in editorForm.attachments" :key="idx" class="flex items-center justify-between bg-white p-2 rounded-xl border border-amber-200 text-xs">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i :class="getFileIcon(file.name)" class="text-base"></i>
+                                    <span class="truncate font-medium text-slate-700">{{ file.name }}</span>
+                                </div>
+                                <button type="button" @click="editorForm.attachments.splice(idx, 1)" class="text-rose-500 hover:text-rose-700 px-1">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" @click="showEditorModal = false" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold">取消</button>
+                        <button type="submit" :disabled="isPublishing" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center gap-1.5 shadow-xs">
+                            <i v-if="isPublishing" class="fa-solid fa-spinner fa-spin"></i>
+                            <span>{{ isPublishing ? '驗證密碼與發布中...' : '確認發布' }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 全螢幕燈箱 -->
+        <div v-if="lightboxOpen" class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-between p-3 select-none" @click.self="closeLightbox">
+            <div class="w-full max-w-5xl flex items-center justify-between text-white py-1">
+                <div class="text-xs opacity-80">({{ lightboxIndex + 1 }} / {{ activeDetailModal.images.length }})</div>
+                <button @click="closeLightbox" class="text-white text-lg p-2 hover:text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="relative flex-grow w-full max-w-5xl flex items-center justify-center my-2 touch-pan-y"
+                 @touchstart="handleTouchStart"
+                 @touchend="e => handleTouchEnd(e, nextLightbox, prevLightbox)">
+                <img :src="activeDetailModal.images[lightboxIndex]" class="max-h-[82vh] max-w-full object-contain rounded-lg">
+                <button v-if="activeDetailModal.images.length > 1" @click="prevLightbox" class="absolute left-2 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button v-if="activeDetailModal.images.length > 1" @click="nextLightbox" class="absolute right-2 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/40 transition">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 動態 Toast 提示 -->
+        <transition name="toast">
+            <div v-if="toastMessage" 
+                 :class="toastType === 'error' ? 'bg-rose-900 text-white border-rose-700' : 'bg-slate-800 text-white border-slate-700'"
+                 class="fixed top-5 left-1/2 -translate-x-1/2 z-50 text-xs sm:text-sm font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border">
+                <i :class="toastType === 'error' ? 'fa-solid fa-circle-xmark text-rose-400' : 'fa-solid fa-circle-check text-emerald-400'"></i>
+                <span>{{ toastMessage }}</span>
+            </div>
+        </transition>
+
+    </div>
+
+    <!-- 防護機制：禁用右鍵與開發者工具快捷鍵 -->
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c'))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+
+    <script>
+        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+
+        createApp({
+            setup() {
+                const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz4IUhDxFt3Z9LfOQ830ndwRHMQdGckrCk4NSFLwSCrVGkMSWVTuKnHldvJcGa8ASs/exec';
+
+                const searchQuery = ref('');
+                const selectedCategory = ref('ALL');
+                const sortOrder = ref('desc');
+
+                const isLoading = ref(false);
+                const isPublishing = ref(false);
+                const announcements = ref([]);
+
+                const activeDetailModal = ref(null);
+                const currentCarouselIndex = ref(0);
+                const lightboxOpen = ref(false);
+                const lightboxIndex = ref(0);
+
+                const touchStartX = ref(0);
+
+                const showEditorModal = ref(false);
+                const passwordError = ref('');
+                const editorForm = ref({ title: '', category: 'GENERAL', publishDate: '', isPinned: false, content: '', images: [], attachments: [], password: '' });
+                const toastMessage = ref('');
+                const toastType = ref('success');
+
+                const categoryEmojiMap = {
+                    'GENERAL': '📢',
+                    'HONOR': '🏆',
+                    'EVENT': '📅',
+                    'HOMEWORK': '📝'
+                };
+
+                const categories = [
+                    { id: 'ALL', label: '全部', icon: '📂' },
+                    { id: 'GENERAL', label: '一般公告', icon: '📢' },
+                    { id: 'HONOR', label: '榮譽榜', icon: '🏆' },
+                    { id: 'EVENT', label: '重要行事', icon: '📅' },
+                    { id: 'HOMEWORK', label: '作業提醒', icon: '📝' }
+                ];
+
+                const parseTimestamp = (dateVal) => {
+                    if (!dateVal) return 0;
+                    if (typeof dateVal === 'number') return dateVal;
+                    
+                    let str = String(dateVal).trim();
+                    if (!str) return 0;
+
+                    const match = str.match(/(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
+                    if (match) {
+                        const year = parseInt(match[1], 10);
+                        const month = parseInt(match[2], 10) - 1;
+                        const day = parseInt(match[3], 10);
+
+                        const timeMatch = str.match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+                        let hour = 0, minute = 0, second = 0;
+                        if (timeMatch) {
+                            hour = parseInt(timeMatch[1], 10);
+                            minute = parseInt(timeMatch[2], 10);
+                            if (timeMatch[3]) second = parseInt(timeMatch[3], 10);
+
+                            const isPM = str.includes('下午') || str.toUpperCase().includes('PM');
+                            const isAM = str.includes('上午') || str.toUpperCase().includes('AM');
+                            if (isPM && hour < 12) hour += 12;
+                            else if (isAM && hour === 12) hour = 0;
+                        }
+
+                        const localDate = new Date(year, month, day, hour, minute, second);
+                        return localDate.getTime();
+                    }
+
+                    const fallbackT = new Date(str.replace('T', ' ').replace(/-/g, '/')).getTime();
+                    return (!isNaN(fallbackT) && fallbackT > 0) ? fallbackT : 0;
+                };
+
+                const formatDate = (iso) => {
+                    if (!iso) return '';
+                    const t = parseTimestamp(iso);
+                    if (!t || t <= 0) {
+                        return String(iso).split('T')[0].replace(/-/g, '/');
+                    }
+                    const d = new Date(t);
+                    return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+                };
+
+                const formatContentWithLinks = (text) => {
+                    if (!text) return '';
+                    const escaped = text
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
+
+                    const urlRegex = /(https?:\/\/[^\s<]+)/g;
+                    return escaped.replace(urlRegex, (url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-sky-600 hover:text-sky-800 underline font-bold break-all inline-flex items-center gap-1 mx-0.5"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>${url}</a>`;
+                    });
+                };
+
+                const loadStoredData = async () => {
+                    isLoading.value = true;
+                    try {
+                        const response = await fetch(GAS_API_URL);
+                        const data = await response.json();
+                        if (Array.isArray(data)) {
+                            announcements.value = data.map(item => ({
+                                ...item,
+                                images: Array.isArray(item.images) ? item.images : (item.images ? String(item.images).split(',').map(s=>s.trim()) : []),
+                                attachments: Array.isArray(item.attachments) ? item.attachments : (item.attachments ? (typeof item.attachments === 'string' ? JSON.parse(item.attachments) : item.attachments) : []),
+                                isPinned: item.isPinned === true || String(item.isPinned).toLowerCase() === 'true'
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('資料讀取失敗:', error);
+                        showToast('⚠️ 資料讀取失敗，請重新整理', 'error');
+                    } finally {
+                        isLoading.value = false;
+                    }
+                };
+
+                const visibleAnnouncements = computed(() => {
+                    const nowWithBuffer = Date.now() + 15 * 60 * 1000;
+                    return announcements.value.filter(item => {
+                        if (item.publishDate) {
+                            const pTime = parseTimestamp(item.publishDate);
+                            if (pTime > 0 && pTime > nowWithBuffer) return false;
+                        }
+                        if (selectedCategory.value !== 'ALL' && item.category !== selectedCategory.value) return false;
+                        if (searchQuery.value.trim() !== '') {
+                            const q = searchQuery.value.toLowerCase();
+                            return (item.title && item.title.toLowerCase().includes(q)) || 
+                                   (item.content && item.content.toLowerCase().includes(q));
+                        }
+                        return true;
+                    }).sort((a, b) => {
+                        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+                        const tA = parseTimestamp(a.publishDate);
+                        const tB = parseTimestamp(b.publishDate);
+                        if (tA === tB) return 0;
+                        return sortOrder.value === 'desc' ? (tB - tA) : (tA - tB);
+                    });
+                });
+
+                const pinnedUrgentAnnouncement = computed(() => visibleAnnouncements.value.find(a => a.isPinned));
+
+                const getCategoryLabel = (id) => categories.find(c => c.id === id)?.label || id;
+                const getCategoryBadgeClass = (id) => {
+                    switch (id) {
+                        case 'HONOR': return 'bg-amber-100 text-amber-800 border border-amber-200';
+                        case 'EVENT': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                        case 'HOMEWORK': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
+                        default: return 'bg-sky-100 text-sky-800 border border-sky-200';
+                    }
+                };
+
+                const getFileIcon = (fileName) => {
+                    if (!fileName) return 'fa-solid fa-file text-slate-400';
+                    const ext = fileName.split('.').pop().toLowerCase();
+                    if (ext === 'pdf') return 'fa-solid fa-file-pdf text-rose-500';
+                    if (['doc', 'docx'].includes(ext)) return 'fa-solid fa-file-word text-blue-500';
+                    if (['xls', 'xlsx'].includes(ext)) return 'fa-solid fa-file-excel text-emerald-500';
+                    if (['ppt', 'pptx'].includes(ext)) return 'fa-solid fa-file-powerpoint text-amber-500';
+                    return 'fa-solid fa-file-lines text-sky-500';
+                };
+
+                const updateTitleEmoji = () => {
+                    const emoji = categoryEmojiMap[editorForm.value.category] || '';
+                    if (!emoji) return;
+                    let currentTitle = editorForm.value.title || '';
+                    Object.values(categoryEmojiMap).forEach(e => {
+                        if (currentTitle.startsWith(e)) currentTitle = currentTitle.substring(e.length).trim();
+                    });
+                    editorForm.value.title = `${emoji} ${currentTitle}`.trim();
+                };
+
+                const handleTouchStart = (e) => {
+                    touchStartX.value = e.touches[0].clientX;
+                };
+
+                const handleTouchEnd = (e, leftSwipeCallback, rightSwipeCallback) => {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const diffX = touchStartX.value - touchEndX;
+                    if (Math.abs(diffX) > 40) {
+                        if (diffX > 0) leftSwipeCallback();
+                        else rightSwipeCallback();
+                    }
+                };
+
+                const handleKeydown = (e) => {
+                    if (lightboxOpen.value) {
+                        if (e.key === 'ArrowLeft') prevLightbox();
+                        else if (e.key === 'ArrowRight') nextLightbox();
+                        else if (e.key === 'Escape') closeLightbox();
+                    } else if (activeDetailModal.value) {
+                        if (e.key === 'ArrowLeft') prevImage();
+                        else if (e.key === 'ArrowRight') nextImage();
+                        else if (e.key === 'Escape') closeDetail();
+                    }
+                };
+
+                const openDetail = (item) => {
+                    activeDetailModal.value = item;
+                    currentCarouselIndex.value = 0;
+                    window.location.hash = item.id;
+                };
+
+                const closeDetail = () => {
+                    activeDetailModal.value = null;
+                    if (window.location.hash) {
+                        history.pushState("", document.title, window.location.pathname + window.location.search);
+                    }
+                };
+
+                const nextImage = () => {
+                    if (!activeDetailModal.value?.images?.length) return;
+                    currentCarouselIndex.value = (currentCarouselIndex.value + 1) % activeDetailModal.value.images.length;
+                };
+
+                const prevImage = () => {
+                    if (!activeDetailModal.value?.images?.length) return;
+                    currentCarouselIndex.value = (currentCarouselIndex.value - 1 + activeDetailModal.value.images.length) % activeDetailModal.value.images.length;
+                };
+
+                const openLightbox = (idx) => { lightboxIndex.value = idx; lightboxOpen.value = true; };
+                const closeLightbox = () => { lightboxOpen.value = false; };
+                const nextLightbox = () => { lightboxIndex.value = (lightboxIndex.value + 1) % activeDetailModal.value.images.length; };
+                const prevLightbox = () => { lightboxIndex.value = (lightboxIndex.value - 1 + activeDetailModal.value.images.length) % activeDetailModal.value.images.length; };
+
+                const copyPermalink = (item) => {
+                    const baseUrl = window.location.origin + window.location.pathname;
+                    const fullPermalink = `${baseUrl}?post=${item.id}`;
+                    const textarea = document.createElement('textarea');
+                    textarea.value = fullPermalink;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast(`🔗 獨立公告網址已成功複製！`, 'success');
+                };
+
+                const handleMultipleImageUpload = (event) => {
+                    const files = event.target.files;
+                    if (!files.length) return;
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.src = e.target.result;
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                const maxWidth = 1000;
+                                let scale = 1;
+                                if (img.width > maxWidth) scale = maxWidth / img.width;
+                                canvas.width = img.width * scale;
+                                canvas.height = img.height * scale;
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+                                editorForm.value.images.push({
+                                    name: file.name,
+                                    type: 'image/jpeg',
+                                    data: compressedBase64,
+                                    preview: compressedBase64
+                                });
+                            };
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                };
+
+                const handleFileUpload = (event) => {
+                    const files = event.target.files;
+                    if (!files.length) return;
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            editorForm.value.attachments.push({
+                                name: file.name,
+                                type: file.type,
+                                data: e.target.result
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                };
+
+                const openEditor = () => {
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    
+                    editorForm.value = { 
+                        title: '', 
+                        category: 'GENERAL', 
+                        publishDate: `${year}-${month}-${day}T${hours}:${minutes}`, 
+                        isPinned: false, 
+                        content: '', 
+                        images: [], 
+                        attachments: [], 
+                        password: '' 
+                    };
+                    passwordError.value = '';
+                    updateTitleEmoji();
+                    showEditorModal.value = true;
+                };
+
+                const savePost = async () => {
+                    if (isPublishing.value) return;
+                    isPublishing.value = true;
+                    passwordError.value = '';
+
+                    try {
+                        const formattedPublishDate = String(editorForm.value.publishDate || '')
+                            .replace('T', ' ')
+                            .replace(/-/g, '/');
+
+                        const postData = {
+                            id: `post-${Date.now()}`,
+                            password: String(editorForm.value.password || '').trim(),
+                            title: editorForm.value.title,
+                            category: editorForm.value.category,
+                            publishDate: formattedPublishDate,
+                            isPinned: editorForm.value.isPinned,
+                            content: editorForm.value.content,
+                            images: editorForm.value.images,
+                            attachments: editorForm.value.attachments
+                        };
+
+                        const response = await fetch(GAS_API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: JSON.stringify(postData)
+                        });
+
+                        const resData = await response.json();
+
+                        if (resData.status !== 'success') {
+                            const errMsg = resData.message || '❌ 管理員密碼不正確！';
+                            passwordError.value = errMsg;
+                            showToast(errMsg, 'error');
+                            isPublishing.value = false;
+                            return;
+                        }
+
+                        showToast('✅ 新公告發布成功！', 'success');
+                        showEditorModal.value = false;
+                        setTimeout(() => { loadStoredData(); }, 1200);
+
+                    } catch (err) {
+                        console.error('發布失敗:', err);
+                        showToast('⚠ 發布失敗，請檢查網路連線', 'error');
+                    } finally {
+                        isPublishing.value = false;
+                    }
+                };
+
+                const showToast = (msg, type = 'success') => {
+                    toastMessage.value = msg;
+                    toastType.value = type;
+                    setTimeout(() => { toastMessage.value = ''; }, 3500);
+                };
+
+                const checkHashPermalink = () => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const targetId = urlParams.get('post') || window.location.hash.replace('#', '');
+                    if (targetId) {
+                        const match = announcements.value.find(a => String(a.id).trim() === String(targetId).trim());
+                        if (match) openDetail(match);
+                    }
+                };
+
+                onMounted(async () => {
+                    await loadStoredData();
+                    checkHashPermalink();
+                    window.addEventListener('keydown', handleKeydown);
+                });
+
+                onUnmounted(() => {
+                    window.removeEventListener('keydown', handleKeydown);
+                });
+
+                return {
+                    searchQuery, selectedCategory, sortOrder, categories,
+                    isLoading, isPublishing, visibleAnnouncements, pinnedUrgentAnnouncement,
+                    activeDetailModal, currentCarouselIndex, lightboxOpen, lightboxIndex,
+                    showEditorModal, editorForm, passwordError, toastMessage, toastType,
+                    getCategoryLabel, getCategoryBadgeClass, getFileIcon, formatDate, formatContentWithLinks, updateTitleEmoji,
+                    handleTouchStart, handleTouchEnd, loadStoredData, openDetail, closeDetail, 
+                    nextImage, prevImage, openLightbox, closeLightbox, nextLightbox, prevLightbox,
+                    copyPermalink, handleMultipleImageUpload, handleFileUpload, openEditor, savePost
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
