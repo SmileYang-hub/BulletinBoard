@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>115學年度401公告欄</title>
+    <title>🏫 Smile Yang 班級園地｜公告欄</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue 3 -->
@@ -63,7 +63,8 @@
 
                 <div class="relative z-10 flex items-center justify-between gap-2 sm:gap-4">
                     <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-                        <div class="relative shrink-0 flex items-center justify-center">
+                        <!-- 📖 點擊看書圖示回頂端 -->
+                        <div @click="scrollToTop" title="回到頂端" class="relative shrink-0 flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform">
                             <div class="w-12 h-12 sm:w-15 sm:h-15 rounded-2xl bg-white/95 text-sky-600 shadow-md flex items-center justify-center text-2xl sm:text-3xl border-2 border-sky-200">
                                 <i class="fa-solid fa-book-open-reader text-sky-500"></i>
                             </div>
@@ -73,14 +74,13 @@
                         </div>
 
                         <div class="min-w-0">
-                            <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-sky-100 border border-white/20 mb-0.5">
-                                <i class="fa-solid fa-school text-amber-200"></i>
-                                <span>401 班級園地</span>
-                                <span>•</span>
-                                <span>即時公告板 🚪</span>
-                            </div>
+                            <!-- 🏫 點擊班級園地進入「發布公告」 -->
+                            <button @click="openEditor" title="點擊發布公告" class="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 active:scale-95 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-sky-100 border border-white/30 mb-0.5 transition cursor-pointer">
+                                <i class="fa-solid fa-pen-to-square text-amber-200"></i>
+                                <span>🌱 班級園地</span>
+                            </button>
                             <h1 class="text-base sm:text-2xl font-black tracking-wide text-white drop-shadow-xs truncate">
-                                115學年度401公告欄
+                                公告欄
                             </h1>
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                 </div>
                 <div class="min-w-0">
                     <span class="text-[10px] sm:text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">重要緊急通知</span>
-                    <h3 class="font-bold text-xs sm:text-base truncate">{{ pinnedUrgentAnnouncement.title }}</h3>
+                    <h3 class="font-bold text-xs sm:text-base break-words">{{ pinnedUrgentAnnouncement.title }}</h3>
                 </div>
             </div>
             <button @click="openDetail(pinnedUrgentAnnouncement)" class="bg-white text-rose-700 font-bold text-xs sm:text-sm px-3 py-1.5 rounded-xl hover:bg-slate-100 shrink-0 transition shadow-xs">
@@ -112,27 +112,13 @@
             </button>
         </div>
 
-        <!-- 主控制板 -->
+        <!-- 主控制板 (已移除發布公告與重新載入按鈕) -->
         <div class="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-sky-100 shadow-xs space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <span>📢 公告與榮譽榜列表</span>
-                    </h2>
-                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">免登入即可瀏覽，點擊公告可檢視照片與下載附件</p>
-                </div>
-
-                <div class="flex items-center gap-2 self-end sm:self-auto">
-                    <button @click="openEditor" class="bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>發布公告</span>
-                    </button>
-
-                    <button @click="loadStoredData" class="bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs sm:text-sm px-3 py-2 rounded-xl border border-sky-200 transition flex items-center gap-1.5" title="重新載入">
-                        <i class="fa-solid fa-rotate-right" :class="{'fa-spin': isLoading}"></i>
-                        <span class="hidden sm:inline">{{ isLoading ? '讀取中' : '重新載入' }}</span>
-                    </button>
-                </div>
+            <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span>📢 公告列表</span>
+                </h2>
+                
             </div>
 
             <!-- 搜尋與精準排序按鈕 -->
@@ -153,12 +139,12 @@
                 </button>
             </div>
 
-            <!-- 分類標籤 -->
+            <!-- 分類標籤 (已優化手機版字體與大小) -->
             <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
                 <button v-for="cat in categories" :key="cat.id"
                         @click="selectedCategory = cat.id"
                         :class="selectedCategory === cat.id ? 'bg-sky-500 text-white shadow-xs' : 'bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-100'"
-                        class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 shrink-0">
+                        class="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-bold transition flex items-center gap-0.5 sm:gap-1 shrink-0">
                     <span>{{ cat.icon }}</span>
                     <span>{{ cat.label }}</span>
                 </button>
@@ -204,7 +190,7 @@
                             </span>
                         </div>
 
-                        <h2 class="font-bold text-slate-800 text-sm sm:text-lg group-hover:text-sky-600 transition truncate">
+                        <h2 class="font-bold text-slate-800 text-sm sm:text-lg group-hover:text-sky-600 transition break-words">
                             {{ item.title }}
                         </h2>
                     </div>
@@ -226,15 +212,20 @@
                 <span class="text-[11px] sm:text-xs text-slate-400 font-medium">即時同步 Google 日曆</span>
             </div>
 
-            <!-- 行事曆等比例自適應容器 (已裁切 Add to Google Calendar) -->
-            <div class="relative w-full pb-[75%] sm:pb-[65%] h-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+            <!-- 📱 手機專用版：日程/列表模式 (&mode=AGENDA) -->
+            <div class="block sm:hidden relative w-full h-[380px] overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                <iframe src="https://calendar.google.com/calendar/embed?src=c_fddca7ba3b6a563eda105c5f8e3b6ce587e96787f8af7bb8ce1ae16bf00070c2%40group.calendar.google.com&amp;src=c_376db376c2adccf3391498b37902d8a5c5f1c625aa56acd721764ea03e7ccd0b%40group.calendar.google.com&amp;ctz=Asia%2FTaipei&amp;mode=AGENDA&amp;showTitle=0&amp;showPrint=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0" 
+                        class="absolute top-0 left-0 w-full h-full border-0"></iframe>
+            </div>
+
+            <!-- 💻 電腦專用版：月曆模式 (Mode = MONTH) -->
+            <div class="hidden sm:block relative w-full pb-[65%] h-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
                 <iframe src="https://calendar.google.com/calendar/embed?src=c_fddca7ba3b6a563eda105c5f8e3b6ce587e96787f8af7bb8ce1ae16bf00070c2%40group.calendar.google.com&amp;src=c_376db376c2adccf3391498b37902d8a5c5f1c625aa56acd721764ea03e7ccd0b%40group.calendar.google.com&amp;ctz=Asia%2FTaipei&amp;showTitle=0&amp;showPrint=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0" 
                         class="absolute top-0 left-0 w-full h-[calc(100%+40px)] border-0" 
-                        frameborder="0" 
                         scrolling="no"></iframe>
             </div>
 
-            <!-- 黃色注意事項欄（小字體、溫和黃色） -->
+            <!-- 黃色注意事項欄 -->
             <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 sm:p-3 text-amber-900 text-xs sm:text-sm flex items-start gap-2 font-medium">
                 <span class="text-sm shrink-0">📢</span>
                 <span>提醒：行事曆僅供參考，若有異動請以學校及班級最新公告為主。</span>
@@ -532,6 +523,10 @@
                 const editorForm = ref({ title: '', category: 'GENERAL', publishDate: '', isPinned: false, content: '', images: [], attachments: [], password: '' });
                 const toastMessage = ref('');
                 const toastType = ref('success');
+
+                const scrollToTop = () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
 
                 const categoryEmojiMap = {
                     'GENERAL': '📢',
@@ -900,7 +895,7 @@
                     getCategoryLabel, getCategoryBadgeClass, getFileIcon, formatDate, formatContentWithLinks, updateTitleEmoji,
                     handleTouchStart, handleTouchEnd, loadStoredData, openDetail, closeDetail, 
                     nextImage, prevImage, openLightbox, closeLightbox, nextLightbox, prevLightbox,
-                    copyPermalink, handleMultipleImageUpload, handleFileUpload, openEditor, savePost
+                    copyPermalink, handleMultipleImageUpload, handleFileUpload, openEditor, savePost, scrollToTop
                 };
             }
         }).mount('#app');
